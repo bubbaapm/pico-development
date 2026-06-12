@@ -1,0 +1,17 @@
+/* GPS data fragment — fetched by JavaScript for auto-refresh */
+<div class="gps-json" id="gpsJsonData"
+  data-valid="<!--#gps_valid-->"
+  data-lat="<!--#gps_lat-->"
+  data-lon="<!--#gps_lon-->"
+  data-alt="<!--#gps_alt-->"
+  data-spd="<!--#gps_spd-->"
+  data-crs="<!--#gps_crs-->"
+  data-sat="<!--#gps_sat-->"
+  data-fix="<!--#gps_fix-->"
+  data-hdop="<!--#gps_hdop-->"
+  data-time="<!--#gps_time-->"
+  data-date="<!--#gps_date-->"
+  data-sentences="<!--#gps_scount-->"
+  data-effect="<!--#led_effect-->"
+  data-track="<!--#gps_track-->"
+></div>

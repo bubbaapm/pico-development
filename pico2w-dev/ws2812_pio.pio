@@ -1,0 +1,61 @@
+;
+; WS2812B PIO Program for RP2350 (Pico 2)
+;
+; Drives a WS2812B-compatible LED strip from a single GPIO using side-set.
+; Protocol: 800 kHz serial, MSB-first, GRB byte order.
+;
+; Timing constants (in PIO cycles @ 800 kHz × 10 cycles/bit):
+;   T1 = 3  — initial low / high setup
+;   T2 = 3  — data-dependent hold
+;   T3 = 4  — trailing low
+;
+; Each bit period = T1 + T2 + T3 = 10 cycles = 1.25 µs @ 800 kHz.
+;
+; Bit encoding on the data line:
+;   '1'  →  high for (T1+T2)=6 cycles, low for T3=4 cycles  → ~750 ns H, ~500 ns L
+;   '0'  →  high for T1=3 cycles, low for (T2+T3)=7 cycles  → ~375 ns H, ~875 ns L
+;
+; The state machine uses autopull (24-bit or 32-bit threshold for RGB/RGBW)
+; and shifts left (MSB first).
+;
+
+.pio_version 0
+
+.program ws2812
+.side_set 1
+
+.define public T1 3
+.define public T2 3
+.define public T3 4
+
+.wrap_target
+bitloop:
+    out x, 1       side 0 [T3 - 1] ; Drive low while shifting next bit out
+    jmp !x do_zero side 1 [T1 - 1] ; Drive high, branch on shifted bit
+do_one:
+    jmp  bitloop   side 1 [T2 - 1] ; Bit was 1: stay high for T2 more
+do_zero:
+    nop            side 0 [T2 - 1] ; Bit was 0: go low for T2 more
+.wrap
+
+% c-sdk {
+#include "hardware/clocks.h"
+
+static inline void ws2812_program_init(PIO pio, uint sm, uint offset, uint pin, float freq, bool rgbw) {
+
+    pio_gpio_init(pio, pin);
+    pio_sm_set_consecutive_pindirs(pio, sm, pin, 1, true);
+
+    pio_sm_config c = ws2812_program_get_default_config(offset);
+    sm_config_set_sideset_pins(&c, pin);
+    sm_config_set_out_shift(&c, false, true, rgbw ? 32 : 24);
+    sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
+
+    int cycles_per_bit = ws2812_T1 + ws2812_T2 + ws2812_T3;
+    float div = clock_get_hz(clk_sys) / (freq * cycles_per_bit);
+    sm_config_set_clkdiv(&c, div);
+
+    pio_sm_init(pio, sm, offset, &c);
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}

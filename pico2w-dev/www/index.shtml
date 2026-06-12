@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pico 2W Dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>&#x1F4E1; Pico 2W Dashboard</h1>
+  <div class="status-bar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Connecting...</span>
+  </div>
+</header>
+
+<main>
+  <!-- LED Control Panel -->
+  <section class="card" id="ledPanel">
+    <h2>&#x1F7E2; LED Matrix Control</h2>
+
+    <div class="control-group">
+      <label>Color</label>
+      <div class="color-row">
+        <input type="color" id="colorPicker" value="#ff0000">
+        <div class="presets">
+          <button class="preset" style="background:#ff0000" onclick="setPreset('#ff0000')"></button>
+          <button class="preset" style="background:#00ff00" onclick="setPreset('#00ff00')"></button>
+          <button class="preset" style="background:#0000ff" onclick="setPreset('#0000ff')"></button>
+          <button class="preset" style="background:#ff7f00" onclick="setPreset('#ff7f00')"></button>
+          <button class="preset" style="background:#8000ff" onclick="setPreset('#8000ff')"></button>
+          <button class="preset" style="background:#ffffff" onclick="setPreset('#ffffff')"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label>Brightness: <span id="brightVal">50</span>%</label>
+      <input type="range" id="brightness" min="0" max="100" value="50"
+             oninput="document.getElementById('brightVal').textContent=this.value"
+             onchange="sendBrightness(this.value)">
+    </div>
+
+    <div class="control-group">
+      <label>Speed: <span id="speedVal">5</span></label>
+      <input type="range" id="speed" min="1" max="10" value="5"
+             oninput="document.getElementById('speedVal').textContent=this.value"
+             onchange="sendSpeed(this.value)">
+    </div>
+
+    <div class="control-group">
+      <label>Solid Color</label>
+      <button class="btn btn-primary" onclick="setColor()">Apply Color</button>
+    </div>
+
+    <div class="control-group">
+      <label>Effects</label>
+      <div class="btn-grid">
+        <button class="btn btn-effect" onclick="setEffect('rainbow')">&#x1F308; Rainbow</button>
+        <button class="btn btn-effect" onclick="setEffect('breathe')">&#x1F4A8; Breathe</button>
+        <button class="btn btn-effect" onclick="setEffect('strobe')">&#x26A1; Strobe</button>
+        <button class="btn btn-effect" onclick="setEffect('fire')">&#x1F525; Fire</button>
+        <button class="btn btn-effect" onclick="setEffect('rain')">&#x1F327;&#xFE0F; Matrix Rain</button>
+        <button class="btn btn-effect" onclick="setEffect('radar')">&#x1F4E1; Radar</button>
+        <button class="btn btn-effect" onclick="setEffect('snow')">&#x2744;&#xFE0F; Snow</button>
+        <button class="btn btn-effect" onclick="setEffect('wave')">&#x1F30A; Plasma</button>
+        <button class="btn btn-effect" onclick="setEffect('compass')">&#x1F9ED; Compass</button>
+        <button class="btn btn-effect" onclick="setEffect('gps')">&#x1F6F0;&#xFE0F; GPS Status</button>
+        <button class="btn btn-danger" onclick="setEffect('off')">&#x23FB; Off</button>
+      </div>
+    </div>
+
+    <!-- 8x8 Pixel Grid -->
+    <div class="control-group">
+      <label>Pixel Editor <small>(click to set pixel)</small></label>
+      <div class="matrix-grid" id="matrixGrid"></div>
+    </div>
+  </section>
+
+  <!-- GPS Data Panel -->
+  <section class="card" id="gpsPanel">
+    <h2>&#x1F4CD; GPS Data</h2>
+
+    <div class="gps-grid">
+      <div class="gps-stat">
+        <div class="gps-label">Fix</div>
+        <div class="gps-value" id="gpsFixBadge">
+          <span class="fix-badge no-fix">No Fix</span>
+        </div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Satellites</div>
+        <div class="gps-value" id="gpsSat">--</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Latitude</div>
+        <div class="gps-value" id="gpsLat">--</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Longitude</div>
+        <div class="gps-value" id="gpsLon">--</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Altitude</div>
+        <div class="gps-value"><span id="gpsAlt">--</span> m</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Speed</div>
+        <div class="gps-value"><span id="gpsSpd">--</span> km/h</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Course</div>
+        <div class="gps-value"><span id="gpsCrs">--</span>&deg;</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">HDOP</div>
+        <div class="gps-value" id="gpsHdop">--</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">UTC Time</div>
+        <div class="gps-value" id="gpsTime">--:--:--</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Date</div>
+        <div class="gps-value" id="gpsDate">----/--/--</div>
+      </div>
+      <div class="gps-stat">
+        <div class="gps-label">Sentences</div>
+        <div class="gps-value" id="gpsSentences">0</div>
+      </div>
+    </div>
+
+    <!-- GPS Track Plot -->
+    <div class="control-group">
+      <label>Track Plot</label>
+      <canvas id="trackCanvas" width="400" height="300"></canvas>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Pico 2W &bull; RP2350 &bull; <span id="activeEffect">none</span></p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
