@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pico Fancy LCD</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>Pico Fancy LCD</h1>
+    <p>Current animation: <strong><!--#anim_name--></strong></p>
+    <form action="/anim/select" method="get">
+      <label for="idx">Animation</label>
+      <select id="idx" name="idx"><!--#anim_options--></select>
+      <button type="submit">Set</button>
+    </form>
+    <form action="/anim/previous" method="get"><button type="submit">Previous</button></form>
+    <form action="/anim/run" method="get"><button type="submit">Replay</button></form>
+    <form action="/anim/next" method="get"><button type="submit">Next</button></form>
+    <img id="frame" src="" alt="LCD framebuffer">
+    <p class="note">Frame capture is served from <code>http://this-pico-ip:8080/frame.bmp</code>.</p>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
